@@ -16,12 +16,23 @@ class TestDAO(object):
     def insertData(self, tuple):
         try :
             cursor = self.conn.cursor()
-            sql = 'insert into crwaling_log (pid, platform, title, contents, newDT) values (%s, %s, %s, %s, %s)'
+            sql = 'insert into Original_CrwalData (pid, platform, title, contents, newDT) values (%s, %s, %s, %s, %s)'
             cursor.executemany(sql ,tuple)
 
             # for row in tuple :
             #     cursor.execute(sql,(row[0], row[1]))
 
+        except mysql.connector.Error as err:
+            print(err)
+            print('롤백')
+
+    def selectData(self, pid):
+        try :
+            cursor = self.conn.cursor()
+            sql = 'select * from Original_CrwalData where pid = {0}'.format(pid)
+            cursor.execute(sql)
+
+            return cursor.fetchall()
         except mysql.connector.Error as err:
             print(err)
             print('롤백')
