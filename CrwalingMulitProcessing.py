@@ -2,7 +2,6 @@ import requests
 from bs4 import BeautifulSoup as bs
 from multiprocessing import Process, current_process, Value, Manager
 import DBConnection
-import random
 
 class CrwalingMulitProcessing(object) :
 

@@ -1,9 +1,19 @@
 # -*- coding: utf-8 -*-
-import collections
+from konlpy.tag import Okt
 import konlpy
-import DBConnection
 
-db = DBConnection.TestDAO()
-doc = db.selectData('2950000')[0][3]
-komor = konlpy.tag.Hannanum().nouns(doc)
-print(komor)
+class createNouns(object) :
+
+    def __init__(self):
+        konlpy.jvm.init_jvm(jvmpath=None, max_heap_size=1024)
+        self.twitter = Okt()
+        pass
+
+    def newNouns(self, doc):
+        result = ''
+        try :
+            result = self.twitter.nouns(doc)
+        except :
+            result = 'false'
+
+        return result

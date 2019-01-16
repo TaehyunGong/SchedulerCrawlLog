@@ -16,7 +16,8 @@ class TestDAO(object):
     def insertData(self, tuple):
         try :
             cursor = self.conn.cursor()
-            sql = 'insert into Original_CrwalData (pid, platform, title, contents, newDT) values (%s, %s, %s, %s, %s)'
+
+            sql = 'insert into Original_CrwalData (pid, platform, title, contents, newDT, nouns) values (%s, %s, %s, %s, %s, %s)'
             cursor.executemany(sql ,tuple)
 
             # for row in tuple :
@@ -33,9 +34,9 @@ class TestDAO(object):
             cursor.execute(sql)
 
             return cursor.fetchall()
-        except mysql.connector.Error as err:
-            print(err)
+        except :
             print('롤백')
+            return ''
 
     def Commit(self):
         self.conn.commit()
