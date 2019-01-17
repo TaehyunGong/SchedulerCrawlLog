@@ -1,7 +1,8 @@
 import requests
 from bs4 import BeautifulSoup as bs
-from multiprocessing import Process, current_process, Value, Manager
+from multiprocessing import Process, Manager
 import DBConnection
+from TestFile import createNouns
 
 class CrwalingMulitProcessing(object) :
 
@@ -9,20 +10,45 @@ class CrwalingMulitProcessing(object) :
         self.DBconn = DBConnection.TestDAO()
         pass
 
-    def processMethod(self, low, high, list, platform):
-        if platform == 'DFchosun' :
-            for i in range(low, high) :
-                self.openBrower(i, list)
-        elif platform == 'DCinside' :
-            print('dc')
+    def siteLastPid(self, site):
+        if site == 'DFchosun' :
+            url = 'http://df.gamechosun.co.kr/board/list.php?bid=tip'
+            css = '.rec_subject > a'
 
-    def openBrower(self, n, list):
+            req = requests.get(url)
+            soup = bs(req.text, 'html.parser')
+
+            a = soup.select(css)[0]['href']
+            return a[-7:]
+
+        elif site == 'DCinside' :
+            url = 'http://gall.dcinside.com/board/lists?id=d_fighter_new1'
+            css = '.gall_num'
+
+            req = requests.get(url)
+            soup = bs(req.text, 'html.parser')
+
+            for row in soup.select(css) :
+                if row.text != '공지' :
+                    pid = row.text
+                    break
+
+            return pid
+
+
+    def processMethod(self, low, high, list, site):
+        if site == 'DFchosun' :
+            for i in range(low, high) :
+                self.openBrowerDFchosun(i, list)
+        elif site == 'DCinside' :
+            for i in range(low, high) :
+                self.openBrowerDFinside(i, list)
+
+    def openBrowerDFchosun(self, n, list):
         try :
-            # url = 'https://search.naver.com/search.naver?sm=top_hty&fbm=1&ie=utf8&query={0}'.format(n)
             url = 'http://df.gamechosun.co.kr/board/view.php?bid=tip&num={0}'.format(n)
             req = requests.get(url)
-            html = req.text
-            soup = bs(html, 'html.parser')
+            soup = bs(req.text, 'html.parser')
             title = soup.find('h1', {'id': 'bbs_title'}).text
             contents = soup.find('div',{'id':'NewsAdContent'}).text
             newDT = soup.find('span', {'class','f12'}).text
@@ -34,41 +60,64 @@ class CrwalingMulitProcessing(object) :
 
         except AttributeError as err :
             print(n, ' 번호는 존재 않함')
+            pass
 
-    def startMain(self,newNouns):
+    def openBrowerDFinside(self, n, list):
+        try :
+            url = 'http://gall.dcinside.com/board/view/?id=d_fighter_new1&no={0}'.format(n)
+            req = requests.get(url)
+            soup = bs(req.text, 'html.parser')
+            title = soup.find('span', {'class': 'title_subject'}).text
+            contents = soup.find('div',{'class':'writing_view_box'}).text
+            newDT = soup.find('span', {'class','gall_date'}).text
 
+            if len(contents) > 4000 :
+                contents = ''
+
+            list.append([n, 'DFinside',title, contents, newDT, ''])
+
+        except AttributeError as err :
+            print(n, ' 번호는 존재 않함')
+            pass
+
+    def startMain(self):
+
+        newNouns = createNouns()
         manager = Manager().list();
 
-        procs = []
-        # for i in range(1,500) :
-        #     print(' '*50,i)
-        #     self.openBrower(random.randrange(2970000,2987778),manager)
+        platformSite = ['DCinside']
 
-        low  = 2950000
-        high = 2950010
+        for site in platformSite :
 
-        plus = high-low
-        division = int(plus / 5)
+            # low는 DB에서 가장 최근껏 에서 +1
+            low = int(self.DBconn.selectLastPid(site)) + 1
+            # high는 크롤링으로 해당사이트에서 가장 최신글 pid
+            high = int(self.siteLastPid(site))
 
-        pageList = [low+(division*x) for x in range(5)]
-        pageList.append(high)
+            plus = high-low
 
+            #프로세스 시작 ! 다만 게시글이 최소 5개 이상이어야함
+            if plus > 5 :
+                division = int(plus / 5)
 
-        #프로세스 시작
-        for i in range(0, 5):
-            proc = Process(target=self.processMethod, args=(pageList[i], pageList[i+1] ,manager, 'DCinside', ))
-            procs.append(proc)
-            proc.start()
+                pageList = [low+(division*x) for x in range(5)]
+                pageList.append(high)
 
-        for proc in procs:
-            proc.join()
+                procs = []
+                for i in range(0, 5):
+                    proc = Process(target=self.processMethod, args=(pageList[i], pageList[i+1] ,manager, site, ))
+                    procs.append(proc)
+                    proc.start()
 
-        m_list = list(manager)
-        for i in range(len(m_list)) :
-            m_list[i][5] = ' '.join(newNouns.newNouns(m_list[i][3]))
-            print(i)
+                for proc in procs:
+                    proc.join()
+            else :
+                print(site, '의 게시글이 5개 미만이므로 패스')
 
-        # self.DBconn.insertData(m_list)
-        # self.DBconn.Commit()
-
-        print(pageList)
+        #결과 계산산
+        # m_list = list(manager)
+        # for i in range(len(m_list)) :
+        #     m_list[i][5] = ' '.join(newNouns.newNouns(m_list[i][3]))
+        #
+        self.DBconn.insertData(manager)
+        self.DBconn.Commit()

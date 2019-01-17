@@ -38,6 +38,16 @@ class TestDAO(object):
             print('롤백')
             return ''
 
+    def selectLastPid(self, site):
+        try :
+            cursor = self.conn.cursor()
+            sql = 'select pid from Original_CrwalData where platform = \'{0}\' order by pid desc LIMIT 1'.format(site)
+            cursor.execute(sql)
+            return cursor.fetchall()[0][0]
+        except Exception as err:
+            print(err)
+            return '0'
+
     def Commit(self):
         self.conn.commit()
 
