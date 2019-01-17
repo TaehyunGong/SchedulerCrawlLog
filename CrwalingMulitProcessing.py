@@ -9,9 +9,12 @@ class CrwalingMulitProcessing(object) :
         self.DBconn = DBConnection.TestDAO()
         pass
 
-    def processMethod(self, low, high, list):
-        for i in range(low, high) :
-            self.openBrower(i,list)
+    def processMethod(self, low, high, list, platform):
+        if platform == 'DFchosun' :
+            for i in range(low, high) :
+                self.openBrower(i, list)
+        elif platform == 'DCinside' :
+            print('dc')
 
     def openBrower(self, n, list):
         try :
@@ -20,19 +23,20 @@ class CrwalingMulitProcessing(object) :
             req = requests.get(url)
             html = req.text
             soup = bs(html, 'html.parser')
-            title = soup.find('h1', {'id': 'bbs_title'})
-            contents = soup.find('div',{'id':'NewsAdContent'})
-            newDT = soup.find('span', {'class','f12'})
+            title = soup.find('h1', {'id': 'bbs_title'}).text
+            contents = soup.find('div',{'id':'NewsAdContent'}).text
+            newDT = soup.find('span', {'class','f12'}).text
 
-            if len(contents.text) > 4000 :
-                contents.text = ''
+            if len(contents) > 4000 :
+                contents = ''
 
-            list.append([n, 'DFchosun',title.text, contents.text, newDT.text])
+            list.append([n, 'DFchosun',title, contents, newDT, ''])
 
         except AttributeError as err :
             print(n, ' 번호는 존재 않함')
 
-    def startMain(self):
+    def startMain(self,newNouns):
+
         manager = Manager().list();
 
         procs = []
@@ -52,15 +56,19 @@ class CrwalingMulitProcessing(object) :
 
         #프로세스 시작
         for i in range(0, 5):
-            proc = Process(target=self.processMethod, args=(pageList[i], pageList[i+1] ,manager,))
+            proc = Process(target=self.processMethod, args=(pageList[i], pageList[i+1] ,manager, 'DCinside', ))
             procs.append(proc)
             proc.start()
 
         for proc in procs:
             proc.join()
 
-        self.DBconn.insertData(manager)
+        m_list = list(manager)
+        for i in range(len(m_list)) :
+            m_list[i][5] = ' '.join(newNouns.newNouns(m_list[i][3]))
+            print(i)
 
-        self.DBconn.Commit()
+        # self.DBconn.insertData(m_list)
+        # self.DBconn.Commit()
 
         print(pageList)
