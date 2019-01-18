@@ -49,7 +49,7 @@ class CrwalingMulitProcessing(object) :
             url = 'http://df.gamechosun.co.kr/board/view.php?bid=tip&num={0}'.format(n)
             req = requests.get(url)
             soup = bs(req.text, 'html.parser')
-            title = soup.find('h1', {'id': 'bbs_title'}).text
+            title = (soup.find('h1', {'id': 'bbs_title'}).text)[4:]
             contents = soup.find('div',{'id':'NewsAdContent'}).text
             newDT = soup.find('span', {'class','f12'}).text
 
@@ -59,7 +59,7 @@ class CrwalingMulitProcessing(object) :
             list.append([n, 'DFchosun',title, contents, newDT, ''])
 
         except AttributeError as err :
-            print(n, ' 번호는 존재 않함 site : DFchosun')
+            # print(n, ' 번호는 존재 않함 site : DFchosun')
             pass
 
         except requests.ConnectionError as err :
@@ -75,17 +75,14 @@ class CrwalingMulitProcessing(object) :
             contents = soup.find('div',{'class':'writing_view_box'}).text
             newDT = soup.find('span', {'class','gall_date'}).text       # 01-18 08:13:00 포맷해야함
 
-            # print( datetime.date(datetime.now().year, newDT[:2], newDT[3:5]) )
             newDT = '-'.join([str(datetime.now().year),newDT[:5]])
-            # print( datetime.strptime(datetime.now().year, '-', newDT[:5], '%Y-%m-%d %H:%M:%S') );
-
             if len(contents) > 4000 :
                 contents = ''
 
-            list.append([n, 'DFinside',title, contents, newDT, ''])
+            list.append([n, 'DCinside',title, contents, newDT, ''])
 
         except AttributeError as err :
-            print(n, ' 번호는 존재 않함 stie : DFinside')
+            # print(n, ' 번호는 존재 않함 stie : DFinside')
             pass
 
         except requests.ConnectionError as err :
@@ -94,9 +91,12 @@ class CrwalingMulitProcessing(object) :
 
     def startMain(self):
         newNouns = createNouns()
+        # newNouns.newNouns('')
+        # return
         manager = Manager().list();
 
         platformSite = ['DFchosun','DCinside']
+        # platformSite = ['DCinside']   #테스트용 던조만
 
         for site in platformSite :
 
@@ -104,7 +104,8 @@ class CrwalingMulitProcessing(object) :
             low = int(self.DBconn.selectLastPid(site)) + 1
             # high는 크롤링으로 해당사이트에서 가장 최신글 pid
             high = int(self.siteLastPid(site))
-
+            print('low : ', low)
+            print('high : ', high)
             plus = high-low
 
             #프로세스 시작 ! 다만 게시글이 최소 5개 이상이어야함
