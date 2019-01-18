@@ -20,9 +20,6 @@ class TestDAO(object):
             sql = 'insert into Original_CrwalData (pid, platform, title, contents, newDT, nouns) values (%s, %s, %s, %s, %s, %s)'
             cursor.executemany(sql ,tuple)
 
-            # for row in tuple :
-            #     cursor.execute(sql,(row[0], row[1]))
-
         except mysql.connector.Error as err:
             print(err)
             print('롤백')
