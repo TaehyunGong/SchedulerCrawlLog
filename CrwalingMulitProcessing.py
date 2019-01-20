@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup as bs
 from multiprocessing import Process, Manager
 import DBConnection
-from TestFile import createNouns
+from DataNLP import createNouns
 from datetime import datetime
 
 class CrwalingMulitProcessing(object) :
@@ -91,8 +91,6 @@ class CrwalingMulitProcessing(object) :
 
     def startMain(self):
         newNouns = createNouns()
-        # newNouns.newNouns('')
-        # return
         manager = Manager().list();
 
         platformSite = ['DFchosun','DCinside']
