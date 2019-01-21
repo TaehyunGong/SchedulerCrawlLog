@@ -30,10 +30,9 @@ class CrwalingMulitProcessing(object) :
             soup = bs(req.text, 'html.parser')
 
             for row in soup.select(css) :
-                if row.text != '공지' :
+                if row.text != '공지' and row.text != '설문' :
                     pid = row.text
                     break
-
             return pid
 
     def processMethod(self, low, high, list, site):
@@ -56,6 +55,7 @@ class CrwalingMulitProcessing(object) :
             if len(contents) > 4000 :
                 contents = ''
 
+            print('DFchosun : ', n)
             list.append([n, 'DFchosun',title, contents, newDT, ''])
 
         except AttributeError as err :
@@ -79,6 +79,7 @@ class CrwalingMulitProcessing(object) :
             if len(contents) > 4000 :
                 contents = ''
 
+            print('DCinside : ', n)
             list.append([n, 'DCinside',title, contents, newDT, ''])
 
         except AttributeError as err :
@@ -102,8 +103,11 @@ class CrwalingMulitProcessing(object) :
             low = int(self.DBconn.selectLastPid(site)) + 1
             # high는 크롤링으로 해당사이트에서 가장 최신글 pid
             high = int(self.siteLastPid(site))
+
+            print(site)
             print('low : ', low)
             print('high : ', high)
+
             plus = high-low
 
             #프로세스 시작 ! 다만 게시글이 최소 5개 이상이어야함
