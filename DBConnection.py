@@ -1,5 +1,4 @@
 import mysql.connector
-from CrwalLog import CrwalLog
 
 class TestDAO(object):
 
@@ -12,7 +11,7 @@ class TestDAO(object):
             'port': '3306'
         }
         self.conn = mysql.connector.connect(**config)
-        self.logdb = CrwalLog(self.conn, self.conn.cursor())
+        # self.logdb = CrwalLog(self.conn, self.conn.cursor())
 
 
     def insertData(self, tuple):
@@ -46,6 +45,9 @@ class TestDAO(object):
         except Exception as err:
             print(err)
             return '0'
+
+    def getConn(self):
+        return self.conn
 
     def Commit(self):
         self.conn.commit()

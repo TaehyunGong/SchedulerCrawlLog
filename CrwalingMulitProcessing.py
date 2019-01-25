@@ -5,12 +5,12 @@ from bs4 import BeautifulSoup as bs
 from multiprocessing import Process, Manager
 from DataNLP import createNouns
 from datetime import datetime
+from CrwalLog import CrwalLog
 
 class CrwalingMulitProcessing(object) :
 
     def __init__(self):
         self.DBconn = DBConnection.TestDAO()
-        logging.getLogger('').addHandler(self.DBconn.logdb)
         pass
 
     def siteLastPid(self, site):
@@ -61,7 +61,7 @@ class CrwalingMulitProcessing(object) :
 
             if len(contents) > 4000 :
                 contents = ''
-
+            print(n)
             list.append([n, 'DFchosun',title, contents, newDT, ''])
 
         except AttributeError as err :
@@ -97,10 +97,12 @@ class CrwalingMulitProcessing(object) :
 
     def startMain(self):
         # 로그 객체 생성
+        # logging.getLogger('').addHandler(self.DBconn.logdb)
+        logging.getLogger('').addHandler(CrwalLog(self.DBconn.getConn(), self.DBconn.getConn().cursor()))
+
         log = logging.getLogger(__name__)
         log.setLevel("DEBUG")
         log.info("Crwaling RUN")
-
         try :
             newNouns = createNouns()
             manager = Manager().list();
