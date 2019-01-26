@@ -33,7 +33,7 @@ class CrwalingMulitProcessing(object) :
                 soup = bs(req.text, 'html.parser')
 
                 for row in soup.select(css) :
-                    if row.text != '공지' :
+                    if row.text != '공지' and row.text != '설문' :
                         pid = row.text
                         break
 
@@ -60,7 +60,9 @@ class CrwalingMulitProcessing(object) :
 
             if len(contents) > 4000 :
                 contents = ''
-            print(n)
+                
+            print('DFchosun : ', n)
+            
             list.append([n, 'DFchosun',title, contents, newDT, ''])
 
         except AttributeError as err :
@@ -84,6 +86,7 @@ class CrwalingMulitProcessing(object) :
             if len(contents) > 4000 :
                 contents = ''
 
+            print('DCinside : ', n)
             list.append([n, 'DCinside',title, contents, newDT, ''])
 
         except AttributeError as err :
@@ -155,4 +158,3 @@ class CrwalingMulitProcessing(object) :
         finally:
             log.info('Crwaling END')
             self.DBconn.closeDB()
-
