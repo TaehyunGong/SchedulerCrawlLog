@@ -11,9 +11,9 @@ class TestDAO(object):
             'port': '3306'
         }
         self.conn = mysql.connector.connect(**config)
-        pass
 
-    def insertData(self, tuple):
+    # 크롤링 데이터 삽입
+    def insertData(self, tuple, log):
         try :
             cursor = self.conn.cursor()
 
@@ -21,32 +21,26 @@ class TestDAO(object):
             cursor.executemany(sql ,tuple)
 
         except mysql.connector.Error as err:
-            print(err)
-            print('롤백')
+            log.error('Fail insertData - ErrorMessage : {0}'.format(err))
 
-    def selectData(self, pid):
-        try :
-            cursor = self.conn.cursor()
-            sql = 'select * from Original_CrwalData where pid = {0}'.format(pid)
-            cursor.execute(sql)
-
-            return cursor.fetchall()
-        except :
-            print('롤백')
-            return ''
-
-    def selectLastPid(self, site):
+    # 크롤링을 위한 DB에서 마지막 pid 조회
+    def selectLastPid(self, site, log):
         try :
             cursor = self.conn.cursor()
             sql = 'select pid from Original_CrwalData where platform = \'{0}\' order by pid desc LIMIT 1'.format(site)
             cursor.execute(sql)
             return cursor.fetchall()[0][0]
-        except Exception as err:
-            print(err)
-            return '0'
+        except mysql.connector.Error as err:
+            log.error('Fail selectLastPid - ErrorMessage : {0}'.format(err))
+
+    def getConn(self):
+        return self.conn
 
     def Commit(self):
         self.conn.commit()
 
     def Rollback(self):
         self.conn.rollback()
+
+    def closeDB(self):
+        self.conn.close()
