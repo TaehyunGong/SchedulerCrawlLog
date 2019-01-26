@@ -43,11 +43,10 @@ class CrwalingMulitProcessing(object) :
             log.warning("siteLastPid pid reference Fail")
 
     def processMethod(self, low, high, list, site):
-        if site == 'DFchosun' :
-            for i in range(low, high) :
+        for i in range(low, high) :
+            if site == 'DFchosun':
                 self.openBrowerDFchosun(i, list)
-        elif site == 'DCinside' :
-            for i in range(low, high) :
+            elif site == 'DCinside':
                 self.openBrowerDFinside(i, list)
 
     def openBrowerDFchosun(self, n, list):
@@ -92,31 +91,32 @@ class CrwalingMulitProcessing(object) :
             pass
 
         except requests.ConnectionError as err :
-            print('connect problem - err : ', err)
+            print('connect problem Pid : ', n ,' ErrorMessage : ', err)
             pass
 
     def startMain(self):
         # 로그 객체 생성
-        # logging.getLogger('').addHandler(self.DBconn.logdb)
         logging.getLogger('').addHandler(CrwalLog(self.DBconn.getConn(), self.DBconn.getConn().cursor()))
 
         log = logging.getLogger(__name__)
         log.setLevel("DEBUG")
         log.info("Crwaling RUN")
+
         try :
             newNouns = createNouns()
             manager = Manager().list();
 
-            platformSite = []
+            # platformSite = []
             # platformSite = ['DFchosun','DCinside']
             platformSite = ['DFchosun']   #테스트용 던조만
 
             for site in platformSite :
 
                 # low는 DB에서 가장 최근껏 에서 +1
-                low = int(self.DBconn.selectLastPid(site)) + 1
                 # high는 크롤링으로 해당사이트에서 가장 최신글 pid
+                low = int(self.DBconn.selectLastPid(site, log)) + 1
                 high = int(self.siteLastPid(site))
+
                 print('low : ', low)
                 print('high : ', high)
                 plus = high-low
@@ -137,7 +137,7 @@ class CrwalingMulitProcessing(object) :
                     for proc in procs:
                         proc.join()
                 else :
-                    log.warning('Fail Because ', site ,' are less than 5 contents ')
+                    log.warning('Fail Because " {0} " are less than 5 contents'.format(site))
 
             #결과 계산산
             m_list = list(manager)
@@ -147,11 +147,12 @@ class CrwalingMulitProcessing(object) :
                 nouns_set = set(nouns_list) #중복값 제거
                 m_list[i][5] = ' '.join(nouns_set)
 
-            self.DBconn.insertData(m_list)
+            self.DBconn.insertData(m_list, log)
             self.DBconn.Commit()
 
         except Exception as err:
-            log.warning('startMain Fail - ' + err.args[0])
+            log.error('startMain Fail - ' + err.args[0])
         finally:
             log.info('Crwaling END')
+            self.DBconn.closeDB()
 
