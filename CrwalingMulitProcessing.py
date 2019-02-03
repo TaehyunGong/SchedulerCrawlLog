@@ -33,11 +33,26 @@ class CrwalingMulitProcessing(object) :
                 soup = bs(req.text, 'html.parser')
 
                 for row in soup.select(css) :
-                    if row.text != '공지' :
+                    if row.text.isdigit() :
                         pid = row.text
                         break
 
                 return pid
+
+            elif site == 'DFruliweb' :
+                url = 'http://bbs.ruliweb.com/family/496/board/102230/'
+                css = '.table_body'
+
+                req = requests.get(url)
+                soup = bs(req.text, 'html.parser')
+
+                for row in soup.select(css):
+                    if '공지' not in row.text:
+                        # 가장 첫번째 공지를 제외한 pid를 가져오기 위한 조건;
+                        pid = row.text.strip().split(' ')[0]
+                        break
+                return pid
+
         except :
             log = logging.getLogger(__name__)
             log.warning("siteLastPid pid reference Fail")
@@ -48,6 +63,8 @@ class CrwalingMulitProcessing(object) :
                 self.openBrowerDFchosun(i, list)
             elif site == 'DCinside':
                 self.openBrowerDFinside(i, list)
+            elif site == 'DFruliweb':
+                self.openBrowerDFruliweb(i, list)
 
     def openBrowerDFchosun(self, n, list):
         try :
@@ -60,7 +77,6 @@ class CrwalingMulitProcessing(object) :
 
             if len(contents) > 4000 :
                 contents = ''
-            print(n)
             list.append([n, 'DFchosun',title, contents, newDT, ''])
 
         except AttributeError as err :
@@ -94,6 +110,34 @@ class CrwalingMulitProcessing(object) :
             print('connect problem Pid : ', n ,' ErrorMessage : ', err)
             pass
 
+    def openBrowerDFruliweb(self, n, list):
+        try :
+            url = 'http://bbs.ruliweb.com/family/496/board/102230/read/{0}'.format(n)
+            req = requests.get(url)
+            soup = bs(req.text, 'html.parser')
+            title = soup.find('span', {'class': 'subject_text'}).text
+            print('전 : ', title)
+            title = title[4:]
+            print('후 : ', title)
+            contents = soup.find('div',{'class':'view_content'}).text
+
+            # 루리웹 날짜 타입 - 2019.02.03 (23:04:16)  을 변환
+            newDT = soup.find('span', {'class','regdate'}).text
+            newDT = newDT.split(' ')[0]
+
+            if len(contents) > 4000 :
+                contents = ''
+
+            list.append([n, 'DFruliweb',title, contents, newDT, ''])
+
+        except AttributeError as err :
+            # print(n, ' 번호는 존재 않함 stie : DFruliweb')
+            pass
+
+        except requests.ConnectionError as err :
+            print('connect problem Pid : ', n ,' ErrorMessage : ', err)
+            pass
+
     def startMain(self):
         # 로그 객체 생성
         logging.getLogger('').addHandler(CrwalLog(self.DBconn.getConn(), self.DBconn.getConn().cursor()))
@@ -106,9 +150,8 @@ class CrwalingMulitProcessing(object) :
             newNouns = createNouns()
             manager = Manager().list();
 
-            # platformSite = []
-            # platformSite = ['DFchosun','DCinside']
-            platformSite = ['DFchosun']   #테스트용 던조만
+            platformSite = ['DFchosun','DCinside','DFruliweb']
+            # platformSite = ['DFruliweb']   #테스트용 던조만
 
             for site in platformSite :
 
