@@ -77,6 +77,7 @@ class CrwalingMulitProcessing(object) :
 
             if len(contents) > 4000 :
                 contents = ''
+                
             list.append([n, 'DFchosun',title, contents, newDT, ''])
 
         except AttributeError as err :
@@ -100,6 +101,7 @@ class CrwalingMulitProcessing(object) :
             if len(contents) > 4000 :
                 contents = ''
 
+            print('DCinside : ', n)
             list.append([n, 'DCinside',title, contents, newDT, ''])
 
         except AttributeError as err :
@@ -198,4 +200,3 @@ class CrwalingMulitProcessing(object) :
         finally:
             log.info('Crwaling END')
             self.DBconn.closeDB()
-
