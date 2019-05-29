@@ -5,8 +5,8 @@ class TestDAO(object):
     def __init__(self):
         config = {
             'user': 'duntory',
-            'password': 'sky950!!',
-            'host': '35.231.50.242',
+            'password': 'password',
+            'host': 'hostIP',
             'database': 'duntory',
             'port': '3306'
         }
